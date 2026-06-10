@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado - Caregiver Overload Prediction System</title>
+    <style>
+        :root { --bg: #f4f7fb; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --primary: #1f6feb; --success: #0f766e; --warning: #b45309; --danger: #b91c1c; --border: #dbe2ea; --shadow: 0 12px 30px rgba(31, 111, 235, 0.10); }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 32px 18px 48px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); padding: 24px; }
+        h1 { margin: 0 0 8px; font-size: 32px; }
+        p { color: var(--muted); line-height: 1.5; }
+        .pill { display: inline-block; padding: 8px 12px; border-radius: 999px; font-weight: 700; margin-bottom: 16px; }
+        .low { background: #dcfce7; color: #166534; }
+        .medium { background: #fef3c7; color: #92400e; }
+        .high { background: #fee2e2; color: #991b1b; }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
+        .box { padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: #fafcff; }
+        .label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .3px; }
+        .value { font-size: 18px; font-weight: 700; }
+        .actions { margin-top: 20px; }
+        a { display: inline-block; text-decoration: none; border-radius: 12px; padding: 12px 18px; background: var(--primary); color: #fff; font-weight: 700; }
+        @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 28px; } }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1>Resultado de la evaluación</h1>
+            <p>El cálculo se realizó en FastAPI y el registro fue enviado a PostgreSQL.</p>
+
+            <div class="pill {{ risk_level }}">{{ risk_level|title }} Risk</div>
+
+            <div class="grid">
+                <div class="box"><span class="label">Score de sobrecarga</span><div class="value">{{ overload_score }}</div></div>
+                <div class="box"><span class="label">Nivel de riesgo</span><div class="value">{{ risk_level|title }}</div></div>
+                <div class="box"><span class="label">Recomendación</span><div class="value">{{ recommendation }}</div></div>
+                <div class="box"><span class="label">ID del registro</span><div class="value">{{ record_id }}</div></div>
+            </div>
+
+            <div class="actions">
+                <a href="{% url 'main' %}">Volver al formulario</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
