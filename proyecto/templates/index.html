@@ -77,7 +77,7 @@
             <form action="{% url 'prediccion' %}" method="post">
                 {% csrf_token %}
                 <div class="scale-note">
-                    Escala: {% for option in zarit_options %}{{ option.value }} = {{ option.label }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                    (Escala) &nbsp;  {% for option in zarit_options %}{{ option.value }} = {{ option.label }}{% if not forloop.last %} · {% endif %}{% endfor %}
                 </div>
 
                 {% for item in zarit_items %}

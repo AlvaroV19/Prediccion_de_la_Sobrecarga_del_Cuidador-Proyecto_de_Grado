@@ -88,6 +88,10 @@ def guardar_prediccion(db, data):
 
     return registro
 
+
+def obtener_predicciones(db):
+    return db.query(PredictionRecord).order_by(PredictionRecord.id.desc()).all()
+
 ##def compute_prediction(data: PredictionInput):
 ##    relationship_weight = {
 ##        'spouse': 2.0,

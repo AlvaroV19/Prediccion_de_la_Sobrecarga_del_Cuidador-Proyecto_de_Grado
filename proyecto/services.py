@@ -16,3 +16,20 @@ def submit_prediction(payload):
         return {'error': f'No fue posible comunicarse con FastAPI: {exc}'}
     except ValueError:
         return {'error': 'FastAPI respondió con un formato inválido.'}
+
+
+def format_result_for_template(result: dict) -> dict:
+        """Normalize FastAPI response into the template context keys.
+
+        Expected FastAPI response example:
+            { 'id': 1, 'prediccion': 1, 'nivel': 'Sobrecarga Media', 'recomendacion': '...' }
+
+        Returned dict contains: overload_score, risk_level, recommendation, record_id
+        """
+        
+        return {
+                'record_id': result.get('id'),
+                'risk_level': result.get('nivel'),
+                'recommendation': result.get('recomendacion'),
+                
+        }

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .services import submit_prediction
+from .services import submit_prediction, format_result_for_template
 
 
 QUESTION_ITEMS = [
@@ -117,11 +117,11 @@ QUESTION_ITEMS = [
 ]
 
 ZARIT_OPTIONS = [
-    {'value': '0', 'label': 'Nunca'},
-    {'value': '1', 'label': 'Casi nunca'},
-    {'value': '2', 'label': 'A veces'},
-    {'value': '3', 'label': 'Bastantes veces'},
-    {'value': '4', 'label': 'Casi siempre'},
+    {'value': '1', 'label': 'Nunca'},
+    {'value': '2', 'label': 'Casi nunca'},
+    {'value': '3', 'label': 'A veces'},
+    {'value': '4', 'label': 'Bastantes veces'},
+    {'value': '5', 'label': 'Casi siempre'},
 ]
 
 
@@ -142,20 +142,8 @@ def _zarit_context(form_data=None):
 
 
 def _result_context(result):
-    overload_score = result.get('overload_score', '-')
-    risk_level = result.get('risk_level', '')
-    recommendation = result.get('recommendation', '-')
-    record_id = result.get('record_id', '-')
-
-    return {
-        'risk_level': risk_level,
-        'result_items': [
-            {'label': 'Score de sobrecarga', 'value': overload_score},
-            {'label': 'Nivel de riesgo', 'value': risk_level},
-            {'label': 'Recomendación', 'value': recommendation},
-            {'label': 'ID del registro', 'value': record_id},
-        ],
-    }
+    # Delegate normalization to services.format_result_for_template
+    return format_result_for_template(result)
 
 
 def _is_authenticated(request):

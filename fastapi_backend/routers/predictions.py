@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
-from ..schemas import PredictionInput
-from ..services import guardar_prediccion
+from ..schemas import PredictionInput, PredictionRecordOut
+from ..services import guardar_prediccion, obtener_predicciones
 
 router = APIRouter()
 
@@ -33,3 +33,8 @@ def predict(payload: PredictionInput, db: Session = Depends(get_db)):
         "nivel": etiquetas.get(record.prediccion, "Desconocido"),
         "recomendacion": recomendaciones.get(record.prediccion, "Recomendación no disponible")
     }
+
+
+@router.get('/predictions', response_model=list[PredictionRecordOut], summary='List all predictions')
+def list_predictions(db: Session = Depends(get_db)):
+    return obtener_predicciones(db)

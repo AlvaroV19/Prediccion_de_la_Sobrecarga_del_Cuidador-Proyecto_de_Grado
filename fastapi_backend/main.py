@@ -1,6 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .database import Base, engine
+from sqlalchemy.orm import Session
+
+from .database import Base, engine, SessionLocal
+from .schemas import PredictionRecordOut
+from .services import obtener_predicciones
 from .routers.predictions import router as predictions_router
 
 Base.metadata.create_all(bind=engine)
@@ -16,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(predictions_router, prefix='/api/v1', tags=['predictions'])
+
 
 @app.get('/health')
 def health():
