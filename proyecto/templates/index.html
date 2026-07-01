@@ -3,36 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caregiver Overload Prediction System</title>
+    <title>Formulario de Evaluación</title>
     <style>
-        :root { --bg: #f4f7fb; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --primary: #1f6feb; --border: #dbe2ea; --shadow: 0 12px 30px rgba(31, 111, 235, 0.10); }
+        :root { --bg: #f6f7fb; --card: #ffffff; --text: #1f2937; --muted: #6b7280; --primary: #1f6feb; --border: #dbe2ea; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
-        .wrap { max-width: 980px; margin: 0 auto; padding: 32px 18px 48px; }
-        .hero { margin-bottom: 20px; }
-        .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #e8f0fe; color: var(--primary); font-size: 12px; font-weight: 700; letter-spacing: .3px; }
-        h1 { margin: 12px 0 8px; font-size: 34px; }
+        .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; }
+        h1 { margin: 0 0 8px; font-size: 30px; }
         p { color: var(--muted); line-height: 1.5; }
-        .card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); padding: 24px; }
-        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-        label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
-        input, select { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); font-size: 15px; background: #fff; }
-        .full { grid-column: 1 / -1; }
-        .actions { margin-top: 18px; display: flex; gap: 12px; align-items: center; }
-        button { border: 0; border-radius: 12px; padding: 12px 18px; background: var(--primary); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
         .messages { margin: 0 0 16px; padding: 0; list-style: none; }
-        .messages li { padding: 12px 14px; border-radius: 12px; background: #fff3cd; color: #7a5a00; border: 1px solid #ffe69c; margin-bottom: 10px; }
-        .hint { font-size: 13px; color: var(--muted); }
-        @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } h1 { font-size: 28px; } }
+        .messages li { padding: 10px 12px; border-radius: 10px; background: #fff3cd; color: #7a5a00; border: 1px solid #ffe69c; margin-bottom: 8px; }
+        .question-card { padding: 16px 0; border-bottom: 1px solid var(--border); }
+        .question-card:last-child { border-bottom: 0; }
+        .question-text { margin: 0 0 10px; font-size: 22px; line-height: 1.5; }
+        .option-group { display: flex; flex-direction: column; gap: 10px; }
+        .option-item { display: flex; align-items: center; gap: 12px; }
+        .option-input {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            margin: 0;
+            border: 2px solid #7f93b7;
+            border-radius: 50%;
+            background: #fff;
+            display: inline-grid;
+            place-content: center;
+            flex: 0 0 auto;
+            cursor: pointer;
+        }
+        .option-input::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: transform 0.12s ease-in-out;
+            box-shadow: inset 1em 1em var(--primary);
+        }
+        .option-input:checked {
+            border-color: var(--primary);
+        }
+        .option-input:checked::before {
+            transform: scale(1);
+        }
+        .option-input:focus-visible {
+            outline: 3px solid rgba(31, 111, 235, 0.2);
+            outline-offset: 2px;
+        }
+        .option-label { display: inline-block; font-size: 21px; line-height: 1.2; cursor: pointer; }
+        .scale-note { margin: 16px 0 12px; padding: 12px 14px; border-radius: 12px; background: #f1f5ff; color: #31446a; font-size: 19px; }
+        .actions { margin-top: 18px; }
+        button { width: 100%; border: 0; border-radius: 12px; padding: 14px 18px; background: var(--primary); color: #fff; font-size: 20px; font-weight: 700; cursor: pointer; }
+        .messages { margin: 0 0 16px; padding: 0; list-style: none; }
+        @media (max-width: 720px) { .wrap { padding: 16px 12px 28px; } h1 { font-size: 26px; } }
     </style>
 </head>
 <body>
     <div class="wrap">
-        <div class="hero">
-            <span class="badge">Caregiver Overload Prediction System</span>
-            <h1>Caregiver Overload Prediction System</h1>
-            <p>Capture caregiver context and send it to FastAPI for scoring and storage in PostgreSQL. Django remains only as the frontend.</p>
-        </div>
+        <h1>Cuestionario de sobrecarga del cuidador</h1>
+        <p>Responda las 22 preguntas con la escala indicada.</p>
 
         {% if messages %}
             <ul class="messages">
@@ -45,49 +76,34 @@
         <div class="card">
             <form action="{% url 'prediccion' %}" method="post">
                 {% csrf_token %}
-                <div class="grid">
-                    <div>
-                        <label for="caregiver_age">Edad del cuidador</label>
-                        <input type="number" id="caregiver_age" name="caregiver_age" min="18" max="100" value="{{ form_data.caregiver_age|default:'' }}" required>
-                    </div>
-                    <div>
-                        <label for="caregiving_hours_per_day">Horas de cuidado por día</label>
-                        <input type="number" id="caregiving_hours_per_day" name="caregiving_hours_per_day" min="1" max="24" value="{{ form_data.caregiving_hours_per_day|default:'' }}" required>
-                    </div>
-                    <div>
-                        <label for="caregiving_days_per_week">Días de cuidado por semana</label>
-                        <input type="number" id="caregiving_days_per_week" name="caregiving_days_per_week" min="1" max="7" value="{{ form_data.caregiving_days_per_week|default:'7' }}" required>
-                    </div>
-                    <div>
-                        <label for="sleep_hours">Horas de sueño promedio</label>
-                        <input type="number" step="0.1" id="sleep_hours" name="sleep_hours" min="0" max="24" value="{{ form_data.sleep_hours|default:'' }}" required>
-                    </div>
-                    <div>
-                        <label for="stress_level">Nivel de estrés (1-10)</label>
-                        <input type="number" id="stress_level" name="stress_level" min="1" max="10" value="{{ form_data.stress_level|default:'' }}" required>
-                    </div>
-                    <div>
-                        <label for="support_network">Red de apoyo (1-5)</label>
-                        <input type="number" id="support_network" name="support_network" min="1" max="5" value="{{ form_data.support_network|default:'' }}" required>
-                    </div>
-                    <div>
-                        <label for="patient_dependence">Dependencia del paciente (1-5)</label>
-                        <input type="number" id="patient_dependence" name="patient_dependence" min="1" max="5" value="{{ form_data.patient_dependence|default:'' }}" required>
-                    </div>
-                    <div>
-                        <label for="relationship_to_patient">Relación con el paciente</label>
-                        <select id="relationship_to_patient" name="relationship_to_patient" required>
-                            <option value="">Seleccione</option>
-                            <option value="spouse" {% if form_data.relationship_to_patient == 'spouse' %}selected{% endif %}>Cónyuge</option>
-                            <option value="child" {% if form_data.relationship_to_patient == 'child' %}selected{% endif %}>Hijo/a</option>
-                            <option value="parent" {% if form_data.relationship_to_patient == 'parent' %}selected{% endif %}>Padre/Madre</option>
-                            <option value="other" {% if form_data.relationship_to_patient == 'other' %}selected{% endif %}>Otro</option>
-                        </select>
-                    </div>
+                <div class="scale-note">
+                    Escala: {% for option in zarit_options %}{{ option.value }} = {{ option.label }}{% if not forloop.last %} · {% endif %}{% endfor %}
                 </div>
+
+                {% for item in zarit_items %}
+                    <div class="question-card">
+                        <p class="question-text"><strong>{{ item.number }}.</strong> {{ item.question }}</p>
+                        <div class="option-group" role="radiogroup" aria-label="Puntuación del ítem {{ item.number }}">
+                            {% for option in zarit_options %}
+                                <div class="option-item">
+                                    <input
+                                        class="option-input"
+                                        type="radio"
+                                        id="{{ item.field_name }}_{{ option.value }}"
+                                        name="{{ item.field_name }}"
+                                        value="{{ option.value }}"
+                                        {% if item.value == option.value %}checked{% endif %}
+                                        required
+                                    >
+                                    <label class="option-label" for="{{ item.field_name }}_{{ option.value }}">{{ option.label }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
                 <div class="actions">
-                    <button type="submit">Evaluar riesgo</button>
-                    <span class="hint">Django envía el formulario a FastAPI sin acceder a la base de datos.</span>
+                    <button type="submit">Predecir</button>
                 </div>
             </form>
         </div>

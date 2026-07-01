@@ -60,7 +60,7 @@ DATABASES = {
         'ENGINE': os.getenv('DJANGO_DB_ENGINE', 'django.db.backends.postgresql'),
         'NAME': os.getenv('DJANGO_DB_NAME', 'caregiver_db'),
         'USER': os.getenv('DJANGO_DB_USER', 'postgres'),
-        'PASSWORD': os.getenv('DJANGO_DB_PASSWORD', '12345'),
+        'PASSWORD': os.getenv('DJANGO_DB_PASSWORD', '1907'),
         'HOST': os.getenv('DJANGO_DB_HOST', '127.0.0.1'),
         'PORT': os.getenv('DJANGO_DB_PORT', '5432'),
     }

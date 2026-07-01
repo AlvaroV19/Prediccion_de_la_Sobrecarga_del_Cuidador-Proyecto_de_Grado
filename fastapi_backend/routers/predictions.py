@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
 from ..schemas import PredictionInput
-from ..services import create_prediction_record
+from ..services import guardar_prediccion
 
 router = APIRouter()
 
@@ -16,10 +16,20 @@ def get_db():
 
 @router.post('/predictions')
 def predict(payload: PredictionInput, db: Session = Depends(get_db)):
-    record = create_prediction_record(db, payload)
+    record = guardar_prediccion(db, payload)
+    etiquetas = {
+        0: "Sobrecarga Baja",
+        1: "Sobrecarga Media",
+        2: "Sobrecarga Alta"
+    }
+    recomendaciones = {
+    0: "Mantener seguimiento periódico.",
+    1: "Se recomienda apoyo familiar y monitoreo.",
+    2: "Se recomienda intervención profesional."
+    }
     return {
-        'record_id': record.id,
-        'overload_score': record.overload_score,
-        'risk_level': record.risk_level,
-        'recommendation': record.recommendation,
+        "id": record.id,
+        "prediccion": record.prediccion,
+        "nivel": etiquetas.get(record.prediccion, "Desconocido"),
+        "recomendacion": recomendaciones.get(record.prediccion, "Recomendación no disponible")
     }
