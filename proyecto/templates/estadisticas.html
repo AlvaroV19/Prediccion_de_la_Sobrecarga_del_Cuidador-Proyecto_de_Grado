@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <style>
+        :root {
+            --bg: #f5f8fb;
+            --card: #ffffff;
+            --text: #152233;
+            --muted: #64748b;
+            --primary: #1f6feb;
+            --border: #d9e1ea;
+            --shadow: 0 16px 36px rgba(21, 34, 51, 0.08);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top right, rgba(31, 111, 235, 0.10), transparent 24%),
+                linear-gradient(180deg, #f8fbff 0%, #f5f8fb 100%);
+        }
+        .wrap {
+            min-height: 100vh;
+            padding: 24px;
+            display: grid;
+            place-items: center;
+        }
+        .card {
+            width: min(1200px, 100%);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 26px;
+            box-shadow: var(--shadow);
+            padding: 32px;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .eyebrow {
+            display: inline-flex;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: #e8f0fe;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 12px 0 8px;
+            font-size: clamp(28px, 4vw, 42px);
+        }
+        p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .grid-two {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+        }
+        .metric {
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+            padding: 20px;
+        }
+        .metric strong {
+            display: block;
+            font-size: 32px;
+            margin-bottom: 6px;
+        }
+        .metric span {
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .chart-card, .table-card, .panel {
+            margin-top: 18px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            padding: 20px;
+            box-shadow: 0 10px 28px rgba(21, 34, 51, 0.05);
+        }
+        .chart-card h2, .table-card h2 {
+            margin: 0 0 8px;
+            font-size: 22px;
+        }
+        .chart-card p, .table-card p {
+            margin-bottom: 14px;
+        }
+        .chart-wrap {
+            position: relative;
+            min-height: 340px;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 14px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+            background: #fff;
+        }
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #edf4ff;
+            color: var(--text);
+            text-align: left;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 14px;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:nth-child(even) {
+            background: #fbfdff;
+        }
+        .question-cell {
+            font-weight: 700;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        .actions {
+            margin-top: 22px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #eef2f7;
+            color: var(--text);
+        }
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+        .legend div {
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #fff;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .legend strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+        .empty-state {
+            padding: 18px;
+            color: var(--muted);
+            text-align: center;
+        }
+        @media (max-width: 860px) {
+            .card { padding: 24px; }
+            .grid { grid-template-columns: 1fr; }
+            .grid-two { grid-template-columns: 1fr; }
+            .legend { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 520px) {
+            .wrap { padding: 14px; }
+            .card { padding: 20px; border-radius: 22px; }
+            .legend { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <main class="card">
+            <div class="topbar">
+                <div>
+                    <span class="eyebrow">Estadísticas</span>
+                    <h1>Resumen general</h1>
+                    <p>Consulta la distribución de respuestas del cuestionario y las clases que ha ido prediciendo el modelo.</p>
+                </div>
+            </div>
+
+            <section class="grid" aria-label="Indicadores principales">
+                <div class="metric">
+                    <strong>{{ total_records }}</strong>
+                    <span>Predicciones registradas</span>
+                </div>
+                <div class="metric">
+                    <strong>{{ question_labels|length }}</strong>
+                    <span>Preguntas analizadas</span>
+                </div>
+                <div class="metric">
+                    <strong>8</strong>
+                    <span>Métricas por pregunta</span>
+                </div>
+            </section>
+
+            <section class="grid-two" aria-label="Gráficos estadísticos">
+                <article class="chart-card">
+                    <span class="eyebrow">Estadística por pregunta</span>
+                    <h2>Frecuencia de respuestas</h2>
+                    <p>Cuantos registros han tenido un valor desde Nunca hasta Casi siempre.</p>
+                    <div class="chart-wrap">
+                        <canvas id="responsesChart"></canvas>
+                    </div>
+                </article>
+
+                <article class="chart-card">
+                    <span class="eyebrow">Estadística por predicción</span>
+                    <h2>Clases predichas por el modelo</h2>
+                    <p>Cuántas predicciones ha hecho el modelo por cada clase detectada.</p>
+                    <div class="chart-wrap">
+                        <canvas id="predictionsChart"></canvas>
+                    </div>
+                </article>
+            </section>
+
+            <section class="table-card" aria-label="Tabla de estadisticas">
+                <span class="eyebrow">Tabla resultante</span>
+                <h2>Métricas por pregunta</h2>
+                <p>Las filas muestran cada pregunta y las columnas contienen count, mean, std, min, 25%, 50%, 75% y max.</p>
+
+                <div class="legend">
+                    <div><strong>count</strong>Cantidad de valores no nulos en la columna.</div>
+                    <div><strong>mean</strong>Valor promedio de los datos.</div>
+                    <div><strong>std</strong>Desviación estándar respecto a la media.</div>
+                    <div><strong>min / quartiles / max</strong>Valores mínimo, percentiles 25, 50, 75 y máximo.</div>
+                </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Pregunta</th>
+                                <th>Count</th>
+                                <th>Mean</th>
+                                <th>Std</th>
+                                <th>Min</th>
+                                <th>25%</th>
+                                <th>50%</th>
+                                <th>75%</th>
+                                <th>Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    <td class="question-cell">{{ row.question }}</td>
+                                    <td>{{ row.count }}</td>
+                                    <td>{{ row.mean|floatformat:4|default_if_none:"-" }}</td>
+                                    <td>{{ row.std|floatformat:4|default_if_none:"-" }}</td>
+                                    <td>{{ row.min|default_if_none:"-" }}</td>
+                                    <td>{{ row.q25|default_if_none:"-" }}</td>
+                                    <td>{{ row.q50|default_if_none:"-" }}</td>
+                                    <td>{{ row.q75|default_if_none:"-" }}</td>
+                                    <td>{{ row.max|default_if_none:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td class="empty-state" colspan="9">No hay datos para mostrar.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <div class="panel">
+                <p>Si después quieres que estas gráficas se agrupen por pregunta individual o por fecha, se puede extender la consulta sin cambiar el diseño.</p>
+            </div>
+
+            <div class="actions">
+                <a class="btn-primary" href="{% url 'main' %}">Volver al menú</a>
+            </div>
+        </main>
+    </div>
+
+    {{ chart_response_labels|json_script:"response-labels" }}
+    {{ chart_response_values|json_script:"response-values" }}
+    {{ prediction_labels|json_script:"prediction-labels" }}
+    {{ prediction_values|json_script:"prediction-values" }}
+    {{ rows|json_script:"stats-rows" }}
+
+    <script>
+        Chart.register(ChartDataLabels);
+
+        const responseLabels = JSON.parse(document.getElementById('response-labels').textContent);
+        const responseValues = JSON.parse(document.getElementById('response-values').textContent);
+        const predictionLabels = JSON.parse(document.getElementById('prediction-labels').textContent);
+        const predictionValues = JSON.parse(document.getElementById('prediction-values').textContent);
+        const statsRows = JSON.parse(document.getElementById('stats-rows').textContent);
+
+        const toPercentage = (value, total) => total ? `${((value / total) * 100).toFixed(1)}%` : '0%';
+        const formatBarLabel = (value, total) => `${value}\n${toPercentage(value, total)}`;
+
+        const responseTotal = responseValues.reduce((sum, value) => sum + Number(value || 0), 0);
+        const predictionTotal = predictionValues.reduce((sum, value) => sum + Number(value || 0), 0);
+
+        const responseCtx = document.getElementById('responsesChart');
+        new Chart(responseCtx, {
+            type: 'bar',
+            data: {
+                labels: responseLabels,
+                datasets: [{
+                    label: 'Registros',
+                    data: responseValues,
+                    borderRadius: 12,
+                    backgroundColor: ['#dbeafe', '#bfdbfe', '#93c5fd', '#60a5fa', '#2563eb'],
+                    borderColor: '#1f6feb',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 50
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: true },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        offset: 8,
+                        color: '#152233',
+                        textAlign: 'center',
+                        font: {
+                            size: 18,
+                            weight: '700'
+                        },
+                        formatter: (value) => formatBarLabel(value, responseTotal)
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+
+        const predictionCtx = document.getElementById('predictionsChart');
+        new Chart(predictionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: predictionLabels.length ? predictionLabels : ['Sin datos'],
+                datasets: [{
+                    data: predictionValues.length ? predictionValues : [1],
+                    backgroundColor: ['#1f6feb', '#0f766e', '#f59e0b', '#ef4444', '#8b5cf6'],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 15
+                            },
+                            padding: 15
+                        }
+                    },
+                    tooltip: { enabled: true },
+                    datalabels: {
+                        color: '#152233',
+                        font: {
+                            size: 15,
+                            weight: '700'
+                        },
+                        formatter: (value) => toPercentage(value, predictionTotal)
+                    }
+                },
+                cutout: '62%'
+            }
+        });
+
+        window.__statsRows = statsRows;
+    </script>
+</body>
+</html>

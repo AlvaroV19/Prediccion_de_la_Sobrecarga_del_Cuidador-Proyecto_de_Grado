@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,28 +7,25 @@
     <title>Acceso Zarit</title>
     <style>
         :root {
-            --bg: #f4f7fb;
+            --bg: #f5f7fb;
             --card: #ffffff;
-            --text: #1f2937;
-            --muted: #6b7280;
-            --primary: #1f6feb;
-            --primary-soft: #e8f0fe;
-            --border: #dbe2ea;
-            --shadow: 0 12px 30px rgba(31, 111, 235, 0.10);
-            --success: #0f766e;
-            --success-soft: #dcfce7;
-            --danger: #b91c1c;
-            --danger-soft: #fee2e2;
+            --text: #182334;
+            --muted: #64748b;
+            --primary: #2164d8;
+            --primary-soft: #e8f0ff;
+            --border: #d7deea;
+            --shadow: 0 20px 50px rgba(17, 34, 56, 0.12);
+            --surface: #f8fbff;
         }
         * { box-sizing: border-box; }
         body {
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
-            background:
-                radial-gradient(circle at top right, rgba(31, 111, 235, 0.10), transparent 30%),
-                radial-gradient(circle at bottom left, rgba(15, 118, 110, 0.08), transparent 25%),
-                var(--bg);
             color: var(--text);
+            background:
+                radial-gradient(circle at top center, rgba(33, 100, 216, 0.12), transparent 28%),
+                radial-gradient(circle at bottom left, rgba(15, 118, 110, 0.08), transparent 24%),
+                linear-gradient(180deg, #fbfdff 0%, #f5f7fb 100%);
         }
         .shell {
             min-height: 100vh;
@@ -35,36 +33,40 @@
             place-items: center;
             padding: 24px;
         }
-        .layout {
-            width: min(1120px, 100%);
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: stretch;
-            flex-wrap: wrap;
-        }
-        .hero, .card {
+        .auth-card {
+            width: min(560px, 100%);
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 24px;
+            border-radius: 28px;
             box-shadow: var(--shadow);
+            padding: 28px;
         }
-        .hero {
-            padding: 30px;
-            position: relative;
-            overflow: hidden;
+        .tabs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 26px;
+            background: #edf2f8;
+            padding: 8px;
+            border-radius: 18px;
         }
-        .hero::after {
-            content: '';
-            position: absolute;
-            right: -100px;
-            top: -100px;
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(31, 111, 235, 0.16), rgba(31, 111, 235, 0));
-            pointer-events: none;
+        .tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            color: var(--muted);
+            transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
         }
+        .tab.active {
+            background: var(--card);
+            color: var(--primary);
+            box-shadow: 0 10px 20px rgba(17, 34, 56, 0.08);
+        }
+        .tab:hover { transform: translateY(-1px); }
         .eyebrow {
             display: inline-flex;
             padding: 7px 12px;
@@ -73,60 +75,33 @@
             color: var(--primary);
             font-size: 12px;
             font-weight: 700;
-            letter-spacing: .3px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
         }
         h1 {
-            margin: 14px 0 12px;
-            font-size: 40px;
+            margin: 14px 0 10px;
+            font-size: clamp(30px, 4vw, 42px);
             line-height: 1.08;
         }
-        h2 {
-            margin: 0 0 12px;
-            font-size: 26px;
-        }
-        .copy {
+        p {
             margin: 0;
             color: var(--muted);
-            font-size: 16px;
             line-height: 1.6;
-            max-width: 60ch;
         }
-        .points {
+        .field {
             display: grid;
-            gap: 12px;
-            margin-top: 24px;
+            gap: 8px;
+            margin-top: 18px;
         }
-        .point {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            padding: 14px 16px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            background: #fafcff;
+        .password-field {
+            position: relative;
         }
-        .bullet {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-top: 5px;
-            flex: 0 0 auto;
-            background: var(--primary);
-            box-shadow: 0 0 0 6px rgba(31, 111, 235, 0.10);
+        label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #102033;
         }
-        .point strong { display: block; margin-bottom: 3px; }
-        .card {
-            width: min(520px, 100%);
-            padding: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .card h2 { margin: 0 0 14px; font-size: 34px; line-height: 1.1; }
-        .card p { margin: 0 0 22px; color: var(--muted); line-height: 1.65; font-size: 16px; }
-        .field { display: grid; gap: 10px; margin-bottom: 18px; }
-        .field label { font-size: 15px; font-weight: 700; color: #111827; }
-        .field input {
+        input {
             width: 100%;
             padding: 15px 16px;
             border-radius: 16px;
@@ -134,29 +109,115 @@
             font-size: 16px;
             background: #fff;
         }
-        .field input:focus {
-            outline: 3px solid rgba(31, 111, 235, 0.16);
-            border-color: rgba(31, 111, 235, 0.55);
+        input:focus {
+            outline: 3px solid rgba(33, 100, 216, 0.15);
+            border-color: rgba(33, 100, 216, 0.55);
+        }
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 14px;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 12px;
+            background: rgba(232, 240, 255, 0.9);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            cursor: pointer;
+            box-shadow: inset 0 0 0 1px rgba(33, 100, 216, 0.10);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+        .password-toggle:hover {
+            transform: translateY(-50%) scale(1.02);
+            box-shadow: inset 0 0 0 1px rgba(33, 100, 216, 0.18), 0 6px 14px rgba(33, 100, 216, 0.10);
+            background: #f1f6ff;
+        }
+        .password-toggle img {
+            width: 18px;
+            height: 18px;
+            display: block;
         }
         .actions {
             display: flex;
             gap: 12px;
-            margin-top: 12px;
+            flex-wrap: wrap;
+            margin-top: 22px;
+            align-items: center;
+            justify-content: space-between;
         }
-        .actions button, .actions a {
-            border: 0;
+        .actions button,
+        .actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 160px;
+            padding: 14px 18px;
             border-radius: 16px;
-            padding: 14px 20px;
+            text-decoration: none;
             font-size: 16px;
             font-weight: 700;
+            border: 0;
             cursor: pointer;
-            text-decoration: none;
-            text-align: center;
             transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
         }
-        .actions button { background: var(--primary); color: #fff; }
-        .actions a { background: #eef2f7; color: var(--text); }
-        .actions button:hover, .actions a:hover { transform: translateY(-1px); }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(33, 100, 216, 0.18);
+        }
+        .btn-secondary {
+            background: #eef3fa;
+            color: var(--text);
+        }
+        .forgot-link {
+            margin-left: auto;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+        .actions button:hover,
+        .actions a:hover {
+            transform: translateY(-1px);
+        }
+        .links {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+        .links .link-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid rgba(33, 100, 216, 0.16);
+            box-shadow: 0 10px 18px rgba(33, 100, 216, 0.08);
+            min-width: 150px;
+        }
+        .links .link-button:hover {
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+        .links a:hover:not(.link-button) { text-decoration: underline; }
         .status {
             display: none;
             margin-top: 16px;
@@ -167,73 +228,91 @@
         }
         .status.success {
             display: block;
-            background: var(--success-soft);
-            color: var(--success);
+            background: #dcfce7;
+            color: #0f766e;
             border: 1px solid rgba(15, 118, 110, 0.18);
         }
         .status.error {
             display: block;
-            background: var(--danger-soft);
-            color: var(--danger);
+            background: #fee2e2;
+            color: #b91c1c;
             border: 1px solid rgba(185, 28, 28, 0.18);
         }
         .hint {
-            margin-top: 16px;
-            font-size: 14px;
+            margin-top: 18px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: var(--surface);
             color: var(--muted);
+            border: 1px solid var(--border);
             line-height: 1.6;
+            font-size: 14px;
         }
-        .hint code {
-            padding: 3px 7px;
-            border-radius: 7px;
-            background: #eef2f7;
-        }
-        @media (max-width: 1040px) {
-            .layout { flex-direction: column; align-items: center; }
-            h1 { font-size: 34px; }
-            .card { width: min(560px, 100%); }
-        }
-        @media (max-width: 720px) {
+        @media (max-width: 640px) {
             .shell { padding: 16px; }
-            .hero, .card { padding: 24px; }
-            .actions { flex-direction: column; }
-            .actions button, .actions a { width: 100%; }
-            h1 { font-size: 30px; }
-            .card h2 { font-size: 30px; }
+            .auth-card { padding: 22px; border-radius: 24px; }
+            .actions button,
+            .actions a,
+            .links .link-button { width: 100%; }
+            .tabs { grid-template-columns: 1fr; }
+            .links { flex-direction: column; }
         }
     </style>
 </head>
 <body>
     <div class="shell">
-        <div class="layout">
+        <main class="auth-card">
+            <nav class="tabs" aria-label="Cambiar autenticación">
+                <span class="tab active">Iniciar sesión</span>
+                <a class="tab" href="{% url 'registro' %}">Crear cuenta</a>
+            </nav>
 
-            <section class="card">
-                <h2>Acceder</h2>
+            <h1>Inicia sesión</h1>
+            <p>Ingresa tus credenciales para acceder al sistema.</p>
 
-                <form id="loginForm" method="post" action="{% url 'login' %}" autocomplete="off">
-                    {% csrf_token %}
-                    <div class="field">
-                        <label for="username">Usuario</label>
-                        <input id="username" name="username" type="text" placeholder="admin" required>
-                    </div>
-                    <div class="field">
-                        <label for="password">Contraseña</label>
+            <form id="loginForm" method="post" action="{% url 'login' %}" autocomplete="off">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="username">Usuario</label>
+                    <input id="username" name="username" type="text" placeholder="admin" required>
+                </div>
+                <div class="field">
+                    <label for="password">Contraseña</label>
+                    <div class="password-field">
                         <input id="password" name="password" type="password" placeholder="zarit2026" required>
+                        <button class="password-toggle" type="button" data-target="password" aria-label="Mostrar contraseña">
+                            <img src="{% static 'images/open.svg' %}" alt="">
+                        </button>
                     </div>
-                    <div class="actions">
-                        <button type="submit">Entrar</button>
-                    </div>
-                </form>
+                </div>
+                <div class="actions">
+                    <button class="btn-primary" type="submit">Entrar</button>
+                    <a class="forgot-link" href="{% url 'recuperar_password' %}">¿Olvidaste la contraseña?</a>
+                </div>
+            </form>
 
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="status {{ message.tags }}" role="alert">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="status {{ message.tags }}" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
 
-                <div class="hint">Credenciales locales: <code id="userHint">{{ default_username }}</code> / <code id="passHint">{{ default_password }}</code></div>
-            </section>
-        </div>
+            <!-- <div class="hint">El acceso se valida contra FastAPI y la sesión guarda el token recibido.</div> -->
+        </main>
     </div>
+
+    <script>
+        document.querySelectorAll('.password-toggle').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.getElementById(button.dataset.target);
+                const image = button.querySelector('img');
+                const isPassword = input.type === 'password';
+
+                input.type = isPassword ? 'text' : 'password';
+                image.src = isPassword ? "{% static 'images/close.svg' %}" : "{% static 'images/open.svg' %}";
+                button.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+            });
+        });
+    </script>
 </body>
 </html>

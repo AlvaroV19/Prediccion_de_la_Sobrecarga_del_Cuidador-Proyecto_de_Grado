@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisa tu correo</title>
+    <style>
+        :root {
+            --primary: #1f6feb;
+            --primary-soft: #e8f0fe;
+            --border: #dbe2ea;
+            --muted: #6b7280;
+            --text: #1f2937;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(31,111,235,0.10), transparent 30%),
+                radial-gradient(circle at bottom left, rgba(15,118,110,0.08), transparent 25%),
+                #f4f7fb;
+            color: var(--text);
+        }
+        .shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+        .card {
+            width: min(520px, 100%);
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(31,111,235,0.10);
+            padding: 40px;
+            text-align: center;
+        }
+        .icon { font-size: 56px; margin-bottom: 16px; }
+        .eyebrow {
+            display: inline-flex;
+            padding: 7px 12px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .3px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+        h1 { margin: 0 0 12px; font-size: clamp(26px, 4vw, 34px); }
+        p { color: var(--muted); line-height: 1.6; margin: 0 0 24px; }
+        .dev-token {
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 16px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            font-size: 13px;
+            color: #92400e;
+            text-align: left;
+            word-break: break-all;
+        }
+        .dev-token strong { display: block; margin-bottom: 6px; }
+        .dev-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 24px;
+            border-radius: 16px;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 16px;
+            margin-top: 8px;
+            transition: transform 0.18s ease;
+        }
+        .dev-link:hover { transform: translateY(-1px); }
+        .back {
+            display: block;
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .back:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <main class="card">
+            <div class="icon">📧</div>
+            <span class="eyebrow">Recuperación de contraseña</span>
+            <h1>Revisa tu correo</h1>
+            <p>
+                Si el correo está registrado, recibirás un enlace<br>
+                para restablecer tu contraseña en los próximos minutos.
+            </p>
+
+            {% if dev_token %}
+                <div class="dev-token">
+                    <strong>🛠 Modo desarrollo — Token de recuperación (visible solo con DEBUG=True):</strong>
+                    {{ dev_token }}
+                </div>
+                <!-- <a class="dev-link" href="{% url 'reset_password' dev_token %}">
+                    Restablecer contraseña ahora
+                </a> -->
+            {% endif %}
+
+            <a class="back" href="{% url 'login' %}">← Volver al inicio de sesión</a>
+        </main>
+    </div>
+</body>
+</html>

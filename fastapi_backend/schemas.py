@@ -1,17 +1,9 @@
 from datetime import datetime
+from pydantic import BaseModel, ConfigDict, EmailStr
 
-from pydantic import BaseModel, Field, ConfigDict
 
+# ── Predicciones ───────────────────────────────────────────────────
 class PredictionInput(BaseModel):
-    ## caregiver_age: int = Field(ge=18, le=100)
-    ## caregiving_hours_per_day: int = Field(ge=1, le=24)
-    ## caregiving_days_per_week: int = Field(ge=1, le=7)
-    ## sleep_hours: float = Field(ge=0, le=24)
-    ## stress_level: int = Field(ge=1, le=10)
-    ## support_network: int = Field(ge=1, le=5)
-    ## patient_dependence: int = Field(ge=1, le=5)
-    ## relationship_to_patient: str = Field(pattern='^(spouse|child|parent|other)$')
-
     P1: int
     P2: int
     P3: int
@@ -33,8 +25,8 @@ class PredictionInput(BaseModel):
     P19: int
     P20: int
     P21: int
-
     grado_carga: int
+
 
 class PredictionOutput(BaseModel):
     id: int
@@ -47,6 +39,7 @@ class PredictionRecordOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    user_id: int
     P1: int
     P2: int
     P3: int
@@ -71,3 +64,38 @@ class PredictionRecordOut(BaseModel):
     grado_carga: int
     prediccion: int
     created_at: datetime | None = None
+
+
+# ── Usuarios ───────────────────────────────────────────────────────
+class UserResponse(BaseModel):
+    """Schema de salida para un usuario. Nunca expone la contraseña."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    email: str
+    first_name: str = ""
+    last_name: str = ""
+    is_staff: bool
+    is_superuser: bool
+    is_active: bool
+    date_joined: datetime | None = None
+
+class UserCreate(BaseModel):
+    """Schema de entrada para registrar un usuario nuevo."""
+    username: str
+    email: EmailStr
+    password: str  # llegará en texto plano; el service la hashea
+    first_name: str = ""
+    last_name: str = ""
+
+class UserUpdate(BaseModel):
+    """
+    Schema de entrada para actualizar un usuario.
+    Todos los campos son opcionales: solo se actualizan los que se envíen.
+    """
+    username: str | None = None
+    email: EmailStr | None = None
+    is_superuser: bool | None = None
+    is_active: bool | None = None
+    is_staff: bool | None = None

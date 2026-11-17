@@ -1,6 +1,17 @@
+import jwt as pyjwt
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .services import submit_prediction, format_result_for_template
+from django.conf import settings
+from .services import (
+    submit_prediction,
+    format_result_for_template,
+    get_statistics_context,
+    get_fastapi_token,
+    register_user,
+    forgot_password,
+    reset_password,
+)
 
 
 QUESTION_ITEMS = [
@@ -150,11 +161,34 @@ def _is_authenticated(request):
     return bool(request.session.get('login_ok'))
 
 
+def _is_admin(request):
+    """Lee el JWT de la sesión y verifica si el rol es admin."""
+    token = request.session.get('fastapi_token')
+    if not token:
+        return False
+    try:
+        payload = pyjwt.decode(token, options={"verify_signature": False})
+        return payload.get('role') == 'admin'
+    except Exception:
+        return False
+    
+
 def main(request):
     if not _is_authenticated(request):
         return redirect('login')
 
-    return render(request, 'index.html', context=_zarit_context())
+    return render(request, 'menu.html', context={
+        'is_admin': _is_admin(request),
+    })
+
+
+def statistics(request):
+    if not _is_authenticated(request):
+        return redirect('login')
+    if not _is_admin(request):       
+        return redirect('main')
+    
+    return render(request, 'estadisticas.html', context=get_statistics_context(request.session.get('fastapi_token')))
 
 
 def login_screen(request):
@@ -162,28 +196,153 @@ def login_screen(request):
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
 
-        if username == 'admin' and password == 'zarit2026':
+        token_response = get_fastapi_token(username, password)
+
+        if 'error' not in token_response:
             request.session['login_ok'] = True
+            request.session['fastapi_token'] = token_response['access_token']
+            print("TOKEN RECIBIDO:")
+            print(request.session['fastapi_token'])
             return redirect('main')
 
-        messages.error(request, 'Usuario o contraseña incorrectos.')
+        messages.error(request, token_response['error'])
 
     return render(request, 'login.html', context={
-        'default_username': 'admin',
-        'default_password': 'zarit2026',
+        'auth_mode': 'Token de FastAPI',
     })
 
 
+def register_screen(request):
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        confirm = request.POST.get('confirm_password', '')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+
+        if not username or not email or not password:
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return render(request, 'register.html')
+
+        error = _validate_password(password, confirm)
+        if error:
+            messages.error(request, error)
+            return render(request, 'register.html')
+
+        result = register_user(username, email, password, first_name, last_name)
+
+        if 'error' in result:
+            messages.error(request, result['error'])
+            return render(request, 'register.html')
+
+        # ── Login automático tras registro exitoso ─────────────────
+        token_response = get_fastapi_token(username, password)
+
+        if 'error' not in token_response:
+            request.session['login_ok']      = True
+            request.session['fastapi_token'] = token_response['access_token']
+            return redirect('main')
+
+        # Si el token falla por alguna razón, redirigir al login
+        messages.success(request, '¡Cuenta creada! Inicia sesión para continuar.')
+        return redirect('login')
+
+    return render(request, 'register.html')
+
+
+def forgot_password_screen(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip()
+
+        if not email:
+            messages.error(request, 'El correo es obligatorio.')
+            return render(request, 'forgot_password.html')
+
+        result = forgot_password(email)
+
+        if 'error' in result:
+            messages.error(request, result['error'])
+            return render(request, 'forgot_password.html')
+
+        # El token de desarrollo solo se guarda en sesión si DEBUG=True.
+        # En producción, FastAPI debe enviar el email y este bloque no debe ejecutarse.
+        if settings.DEBUG and 'dev_token' in result:
+            request.session['reset_token'] = result['dev_token']
+
+        return redirect('pendiente_reset')
+
+    return render(request, 'forgot_password.html')
+
+
+def pending_reset_screen(request):
+    """Pantalla de espera tras solicitar recuperación."""
+    dev_token = request.session.get('reset_token', '') if settings.DEBUG else ''
+    request.session.pop('reset_token', None)  # se consume una sola vez
+    return render(request, 'pending_reset.html', {'dev_token': dev_token})
+
+
+def reset_password_screen(request, token):      # ← recibe token por URL
+    if request.method == 'POST':
+        new_password = request.POST.get('new_password', '')
+        confirm      = request.POST.get('confirm_password', '')
+
+        error = _validate_password(new_password, confirm)
+        if error:
+            messages.error(request, error)
+            return render(request, 'reset_password.html', {'token': token})
+
+        result = reset_password(token, new_password)
+
+        if 'error' in result:
+            # Token inválido o expirado: no tiene sentido reintentar en el mismo
+            # formulario, el token ya no sirve. Enviamos a pedir uno nuevo.
+            messages.error(
+                request,
+                f"{result['error']} Por favor solicita un nuevo enlace de recuperación."
+            )
+            return redirect('recuperar_password')
+
+        request.session.pop('reset_token', None)
+        messages.success(request, '¡Contraseña actualizada! Ya puedes iniciar sesión.')
+        return redirect('login')
+
+    return render(request, 'reset_password.html', {'token': token})
+
+
+def _validate_password(password: str, confirm: str) -> str | None:
+    """
+    Retorna un mensaje de error si la contraseña no cumple la política.
+    Retorna None si todo está bien.
+    """
+    import re
+    if password != confirm:
+        return 'Las contraseñas no coinciden.'
+    if len(password) < 8:
+        return 'La contraseña debe tener al menos 8 caracteres.'
+    if not re.search(r'[A-Z]', password):
+        return 'La contraseña debe tener al menos una letra mayúscula.'
+    if not re.search(r'[a-z]', password):
+        return 'La contraseña debe tener al menos una letra minúscula.'
+    if not re.search(r'\d', password):
+        return 'La contraseña debe tener al menos un número.'
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-]', password):
+        return 'La contraseña debe tener al menos un carácter especial.'
+    return None
+
+
 def predict(request):
+    print(">>> Entró a predict <<<")
+    print(request.method)
     if not _is_authenticated(request):
         return redirect('login')
 
     if request.method != 'POST':
-        return redirect('main')
+        return render(request, 'index.html', context=_zarit_context())
 
     payload = {item['field_name']: request.POST.get(item['field_name']) for item in QUESTION_ITEMS}
 
-    result = submit_prediction(payload)
+    result = submit_prediction(payload, token=request.session.get('fastapi_token'))
 
     if 'error' in result:
         messages.error(request, result['error'])

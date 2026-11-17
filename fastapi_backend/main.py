@@ -1,27 +1,35 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
 
-from .database import Base, engine, SessionLocal
-from .schemas import PredictionRecordOut
-from .services import obtener_predicciones
+from .database import Base, engine
 from .routers.predictions import router as predictions_router
+from .routers.auth import router as auth_router
+from .routers.users import router as users_router
 
+# Crea las tablas en BD si no existen
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title='Caregiver Overload Prediction System', version='1.0.0')
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+app = FastAPI(
+    title="Caregiver Overload Prediction System",
+    version="1.0.0",
+    description="API para predicción de sobrecarga en cuidadores",
 )
 
-app.include_router(predictions_router, prefix='/api/v1', tags=['predictions'])
+# ── CORS ───────────────────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],      # En producción reemplazar con el dominio real
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# ── Routers ────────────────────────────────────────────────────────
+app.include_router(auth_router)                          # /auth/token
+app.include_router(predictions_router, prefix="/api/v1") # /api/v1/predictions
+app.include_router(users_router, prefix="/api/v1")       # /api/v1/users
 
-@app.get('/health')
+# ── Health check ───────────────────────────────────────────────────
+@app.get("/health", tags=["Health"])
 def health():
-    return {'status': 'ok'}
+    return {"status": "ok"}

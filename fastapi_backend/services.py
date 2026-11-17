@@ -1,21 +1,25 @@
+from pathlib import Path
+
 import joblib
 import pandas as pd
+from sqlalchemy.orm import Session
+
 from .models import PredictionRecord
 from .schemas import PredictionInput
 
-modelo = joblib.load(
-    "modelos/modelo_gb.pkl"
-)
+# ── Carga de artefactos ML ─────────────────────────────────────────
+# Rutas ancladas a la ubicación de este archivo, no al directorio
+# desde el que se ejecute el proceso (uvicorn, tests, etc.)
+BASE_DIR = Path(__file__).resolve().parent
+MODELOS_DIR = BASE_DIR / "modelos"
 
-scaler = joblib.load(
-    "modelos/scaler.pkl"
-)
+# ── Carga de artefactos ML ─────────────────────────────────────────
+modelo = joblib.load(MODELOS_DIR / "modelo_gb.pkl")
+scaler = joblib.load(MODELOS_DIR / "scaler.pkl")
+features = joblib.load(MODELOS_DIR / "features.pkl")
 
-features = joblib.load(
-    "modelos/features.pkl"
-)
-
-def predecir(data):
+# ── Lógica de predicción ───────────────────────────────────────────
+def predecir(data: PredictionInput) -> int:
 
     datos = {
         "P1_encoded": data.P1,
@@ -43,20 +47,18 @@ def predecir(data):
     }
 
     df = pd.DataFrame([datos])
-
     X = df[features]
-
     X_scaled = scaler.transform(X)
 
-    pred = int(modelo.predict(X_scaled)[0])
+    return int(modelo.predict(X_scaled)[0])
 
-    return pred
-
-def guardar_prediccion(db, data):
+# ── Guardar predicción en BD ───────────────────────────────────────
+def guardar_prediccion(db: Session, data: PredictionInput, user_id: int,) -> PredictionRecord:
 
     pred = predecir(data)
 
     registro = PredictionRecord(
+        user_id=user_id,
         P1=data.P1,
         P2=data.P2,
         P3=data.P3,
@@ -88,67 +90,15 @@ def guardar_prediccion(db, data):
 
     return registro
 
+# ── Consultas ──────────────────────────────────────────────────────
+def obtener_predicciones(db: Session) -> list[PredictionRecord]:
+    return db.query(PredictionRecord).order_by(PredictionRecord.id.asc()).all()
 
-def obtener_predicciones(db):
-    return db.query(PredictionRecord).order_by(PredictionRecord.id.desc()).all()
-
-##def compute_prediction(data: PredictionInput):
-##    relationship_weight = {
-##        'spouse': 2.0,
-##        'child': 1.5,
-##        'parent': 1.8,
-##        'other': 1.2,
-##    }
-##
-##    sleep_deficit = max(0.0, 8.0 - data.sleep_hours)
-##
-##    score = (
-##        data.caregiving_hours_per_day * 2.5
-##        + data.caregiving_days_per_week * 1.5
-##        + data.stress_level * 3.0
-##        + data.patient_dependence * 2.2
-##        + sleep_deficit * 2.0
-##        + (6 - data.support_network) * 1.8
-##        + relationship_weight.get(data.relationship_to_patient, 1.2)
-##    )
-##
-##    score = round(score, 2)
-##
-##    if score < 22:
-##        risk_level = 'low'
-##        recommendation = 'Mantener seguimiento y reforzar hábitos de descanso.'
-##    elif score < 35:
-##        risk_level = 'medium'
-##        recommendation = 'Revisar carga de cuidado, apoyo familiar y pausas regulares.'
-##    else:
-##        risk_level = 'high'
-##        recommendation = 'Buscar apoyo profesional y redistribuir tareas de cuidado cuanto antes.'
-##
-##    return {
-##        'overload_score': score,
-##        'risk_level': risk_level,
-##        'recommendation': recommendation,
-##    }
-##
-##
-##def create_prediction_record(db, data: PredictionInput):
-##    result = compute_prediction(data)
-##
-##    record = PredictionRecord(
-##        caregiver_age=data.caregiver_age,
-##        caregiving_hours_per_day=data.caregiving_hours_per_day,
-##        caregiving_days_per_week=data.caregiving_days_per_week,
-##        sleep_hours=data.sleep_hours,
-##        stress_level=data.stress_level,
-##        support_network=data.support_network,
-##        patient_dependence=data.patient_dependence,
-##        relationship_to_patient=data.relationship_to_patient,
-##        overload_score=result['overload_score'],
-##        risk_level=result['risk_level'],
-##        recommendation=result['recommendation'],
-##    )
-##    db.add(record)
-##    db.commit()
-##    db.refresh(record)
-##
-##    return record
+def obtener_predicciones_por_usuario(db: Session, user_id: int) -> list[PredictionRecord]:
+    """Devuelve solo las predicciones del usuario autenticado."""
+    return (
+        db.query(PredictionRecord)
+        .filter(PredictionRecord.user_id == user_id)
+        .order_by(PredictionRecord.id.asc())
+        .all()
+    )
